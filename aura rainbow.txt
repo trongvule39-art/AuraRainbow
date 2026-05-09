@@ -1,61 +1,65 @@
--- TRONGVU HUB - RAINBOW AURA PLAYER (BY: TRONGVU)
+-- TRONGVU HUB - INDEPENDENT MULTI-AURA (BY: TRONGVU)
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 local Main = Instance.new("Frame", ScreenGui)
 local Title = Instance.new("TextLabel", Main)
-local Credits = Instance.new("TextLabel", Main) -- Dòng chữ By: TrongVu
+local Credits = Instance.new("TextLabel", Main)
 local Scroll = Instance.new("ScrollingFrame", Main)
 local SelectedLabel = Instance.new("TextLabel", Main)
 local AuraBtn = Instance.new("TextButton", Main)
 
--- Biến hệ thống
+-- HỆ THỐNG LƯU TRỮ ĐỘC LẬP
 local selectedPlayer = nil
-local auraActive = false
-local currentAura = nil
-local currentHighlight = nil
+local activeAuras = {} -- Lưu theo UserId: {Enabled = bool, Highlight = obj, Part = obj}
 
--- Thiết kế giao diện (Tối ưu cho Solara)
+-- Thiết kế giao diện
 Main.Size = UDim2.new(0, 220, 0, 320)
 Main.Position = UDim2.new(0.5, -110, 0.5, -160)
-Main.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 Main.BorderSizePixel = 0
 Main.Active = true
 Main.Draggable = true
 
 Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-Title.Text = "RAINBOW AURA SYSTEM"
+Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Title.Text = "INDEPENDENT AURA"
 Title.TextColor3 = Color3.new(1, 1, 1)
-Title.TextSize = 14
 Title.Font = Enum.Font.SourceSansBold
 
--- THÊM CHỮ BY: TRONGVU
 Credits.Size = UDim2.new(1, 0, 0, 20)
 Credits.Position = UDim2.new(0, 0, 0, 30)
 Credits.Text = "By: TrongVu"
-Credits.TextColor3 = Color3.fromRGB(0, 255, 255) -- Màu xanh Neon
-Credits.TextSize = 12
-Credits.Font = Enum.Font.SourceSansItalic
+Credits.TextColor3 = Color3.fromRGB(0, 255, 255)
 Credits.BackgroundTransparency = 1
 
 SelectedLabel.Size = UDim2.new(1, 0, 0, 30)
 SelectedLabel.Position = UDim2.new(0, 0, 0, 50)
-SelectedLabel.Text = "Đang chọn: NONE"
+SelectedLabel.Text = "Chọn: NONE"
 SelectedLabel.TextColor3 = Color3.new(1, 1, 0)
 SelectedLabel.BackgroundTransparency = 1
 
 Scroll.Size = UDim2.new(0.9, 0, 0, 140)
 Scroll.Position = UDim2.new(0.05, 0, 0, 85)
-Scroll.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+Scroll.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Scroll.BorderSizePixel = 0
 
 AuraBtn.Size = UDim2.new(0.8, 0, 0, 40)
 AuraBtn.Position = UDim2.new(0.1, 0, 0, 260)
-AuraBtn.Text = "KÍCH HOẠT AURA"
+AuraBtn.Text = "KÍCH HOẠT"
 AuraBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 AuraBtn.TextColor3 = Color3.new(1, 1, 1)
-AuraBtn.Font = Enum.Font.SourceSansBold
 
--- Hàm cập nhật danh sách người chơi
+-- Hàm cập nhật màu nút theo từng người
+local function UpdateButtonUI()
+    if selectedPlayer and activeAuras[selectedPlayer.UserId] then
+        AuraBtn.Text = "TẮT AURA CHO NGƯỜI NÀY"
+        AuraBtn.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+    else
+        AuraBtn.Text = "BẬT AURA CHO NGƯỜI NÀY"
+        AuraBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+    end
+end
+
+-- Cập nhật danh sách
 local function UpdateList()
     for _, v in pairs(Scroll:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
     local yPos = 0
@@ -64,63 +68,63 @@ local function UpdateList()
         btn.Size = UDim2.new(1, 0, 0, 25)
         btn.Position = UDim2.new(0, 0, 0, yPos)
         btn.Text = p.Name
-        btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
         btn.TextColor3 = Color3.new(1, 1, 1)
-        btn.BorderSizePixel = 0
         btn.MouseButton1Click:Connect(function()
             selectedPlayer = p
-            SelectedLabel.Text = "Đang chọn: " .. p.Name
+            SelectedLabel.Text = "Chọn: " .. p.Name
+            UpdateButtonUI()
         end)
         yPos = yPos + 27
     end
     Scroll.CanvasSize = UDim2.new(0, 0, 0, yPos)
 end
 
--- Logic hiệu ứng Rainbow
+-- Logic Aura Độc Lập
 AuraBtn.MouseButton1Click:Connect(function()
-    if not selectedPlayer then return end
-    auraActive = not auraActive
-    
-    if auraActive then
-        AuraBtn.Text = "HỦY BỎ AURA"
-        AuraBtn.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+    if not selectedPlayer or not selectedPlayer.Character then return end
+    local id = selectedPlayer.UserId
+    local char = selectedPlayer.Character
+
+    if activeAuras[id] then
+        -- Tắt Aura của riêng người này
+        activeAuras[id].Enabled = false
+        activeAuras[id] = nil
+    else
+        -- Bật Aura mới cho người này
+        local data = {Enabled = true}
+        activeAuras[id] = data
         
-        currentHighlight = Instance.new("Highlight")
-        currentHighlight.Parent = selectedPlayer.Character
-        currentHighlight.FillTransparency = 0.5
-        
-        currentAura = Instance.new("Part")
-        currentAura.Parent = workspace
-        currentAura.Shape = Enum.PartType.Cylinder
-        currentAura.Size = Vector3.new(0.4, 7, 7)
-        currentAura.Anchored = true
-        currentAura.CanCollide = false
-        currentAura.Material = Enum.Material.Neon
-        currentAura.Transparency = 0.4
-        
+        local hi = Instance.new("Highlight", char)
+        local pt = Instance.new("Part", workspace)
+        pt.Shape = Enum.PartType.Cylinder
+        pt.Size = Vector3.new(0.3, 6, 6)
+        pt.Anchored = true
+        pt.CanCollide = false
+        pt.Material = Enum.Material.Neon
+        pt.Transparency = 0.5
+
         task.spawn(function()
-            while auraActive and selectedPlayer and selectedPlayer.Character do
-                local color = Color3.fromHSV(tick() % 5 / 5, 1, 1)
-                if currentHighlight then 
-                    currentHighlight.FillColor = color
-                    currentHighlight.OutlineColor = color
-                end
-                if currentAura and selectedPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    currentAura.Color = color
-                    currentAura.CFrame = selectedPlayer.Character.HumanoidRootPart.CFrame * CFrame.Angles(0, 0, math.rad(90)) * CFrame.new(-3.2, 0, 0)
+            while data.Enabled and selectedPlayer and char.Parent do
+                local c = Color3.fromHSV(tick() % 5 / 5, 1, 1)
+                hi.FillColor = c
+                hi.OutlineColor = c
+                if char:FindFirstChild("HumanoidRootPart") then
+                    pt.Color = c
+                    pt.CFrame = char.HumanoidRootPart.CFrame * CFrame.Angles(0, 0, math.rad(90)) * CFrame.new(-3, 0, 0)
                 end
                 task.wait()
             end
-            if currentHighlight then currentHighlight:Destroy() end
-            if currentAura then currentAura:Destroy() end
+            hi:Destroy()
+            pt:Destroy()
         end)
-    else
-        AuraBtn.Text = "KÍCH HOẠT AURA"
-        AuraBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        auraActive = false
     end
+    UpdateButtonUI()
 end)
 
 UpdateList()
 game.Players.PlayerAdded:Connect(UpdateList)
-game.Players.PlayerRemoving:Connect(UpdateList)
+game.Players.PlayerRemoving:Connect(function(p) 
+    if activeAuras[p.UserId] then activeAuras[p.UserId].Enabled = false end
+    UpdateList() 
+end)
